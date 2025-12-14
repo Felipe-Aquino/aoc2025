@@ -97,6 +97,7 @@ class Machine:
         return presses
 
     def fewest_total_presses_for_joltage(self):
+        epsilon = 1e-9
         data = []
 
         unknowns_count = len(self.buttons_wiring)
@@ -132,7 +133,7 @@ class Machine:
             count = 0
 
             for i in range(mtx.nrows):
-                if mtx.at(i, j) != 0:
+                if abs(mtx.at(i, j)) > epsilon:
                     count += 1
                     if count > 1:
                         free_columns.append(j)
@@ -142,7 +143,7 @@ class Machine:
             found = -1
 
             for j in range(mtx.ncols - 1):
-                if mtx.at(i, j) != 0:
+                if abs(mtx.at(i, j)) > epsilon:
                     found = i
                     break
 
@@ -165,7 +166,7 @@ class Machine:
                 # print(i, col, max_value)
             max_value = max(0, max_value)
 
-            # Adding 10 just to be sure
+            # Adding 20 just to be sure
             free_columns_max_value.append(max_value + 20)
 
         # print(free_columns, free_columns_max_value)
@@ -175,23 +176,20 @@ class Machine:
         if len(free_columns) > 0:
             for values in gen_ranges(free_columns_max_value):
                 presses = 0
-                for v in values:
+                for i, v in enumerate(values):
                     presses += v
 
                 for i in range(first_empty_row_idx):
                     v = mtx.at(i, mtx.ncols - 1)
 
-                    k = 0
-                    for col in free_columns:
+                    for k, col in enumerate(free_columns):
                         v -= values[k] * mtx.at(i, col)
-                        k += 1
 
-                    # print(v, math.ceil(v))
-                    if v < 0 and abs(v) > 1e-9:
+                    if v < 0 and abs(v) > epsilon:
                         presses = 1e9
                         break
                     
-                    v2 = round(v + 1e-9)
+                    v2 = round(v + epsilon)
                     if abs(v - v2) > 0.0001:
                         presses = 1e9
                         break
@@ -201,6 +199,8 @@ class Machine:
                 min_presses = min(min_presses, presses)
 
                 # print(values, presses)
+
+            # print(min_presses, free_columns)
         else:
             presses = 0
 
@@ -209,7 +209,7 @@ class Machine:
                 v2 = round(v)
                 presses += v2
 
-                print(v, v2);
+                # print(v, v2);
 
             # print('exact', presses)
             min_presses = presses
@@ -248,14 +248,10 @@ def part2():
 
     machines = [Machine(l) for l in lines]
 
-    # white_list = [61, 62, 122, 129]
     total_presses = 0
-    i = 0
     for m in machines:
         presses = m.fewest_total_presses_for_joltage()
         total_presses += presses
-        i += 1
-        # print(i, presses)
 
     print('Fewest presses:', total_presses)
 
