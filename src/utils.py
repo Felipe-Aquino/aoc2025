@@ -10,6 +10,13 @@ def read_file_lines(filename: str, rstrip: bool = True) -> list[str]:
 
     return lines
 
+def list_find(ls, callback):
+    for i, element in enumerate(ls):
+        if callback(element):
+            return element, i
+
+    return None, -1
+
 class Matrix:
     def __init__(self, data: list[list[int]]):
         self.nrows = len(data)
